@@ -9,6 +9,11 @@ from functools import reduce
 import pkgutil
 import os
 import pathlib
+import logging
+
+
+logger = logging.getLogger(__name__)
+
 
 class Keyboard:
     HID_DEV=None
@@ -22,10 +27,11 @@ class Keyboard:
             try:
                 Keyboard.HID_DEV=open(dev_path, 'ab+')
                 self.dev = Keyboard.HID_DEV
+                logger.debug(f"Successfully open HID device: '{dev_path}'")
             except Exception as e:
                 self.dev = None
-                print(f"Failed to open HID device: '{dev_path}'")
-                print(e)
+                logger.error(f"Failed to open HID device: '{dev_path}'")
+                logger.exception(e)
 
         self.set_layout()
 
@@ -37,7 +43,7 @@ class Keyboard:
             with open(keymaps_dir / fname , encoding='UTF-8') as f:
                 content = json.load(f)
                 name, desc = content['Name'], content['Description']
-            print(f'{count}. {name}: {desc}')
+            logger.debug(f'{count}. {name}: {desc}')
 
 
     def set_layout(self,  language='US'):
@@ -78,6 +84,7 @@ class Keyboard:
         if Keyboard.HID_DEV:
             Keyboard.HID_DEV.close()
             self.dev = None
+            logger.debug(f"Closed HID device: '{self.dev_path}'")
 
     def __enter__(self):
         return self

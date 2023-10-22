@@ -1,5 +1,9 @@
 from .hid.mouse import send_mouse_event
 from typing import SupportsInt
+import logging
+
+
+logger = logging.getLogger(__name__)
 
 
 class RelativeMoveRangeError(Exception):
@@ -18,20 +22,25 @@ class Mouse:
             try:
                 Mouse.HID_DEV=open(dev_path, 'ab+')
                 self.dev = Mouse.HID_DEV
+                logger.debug(f"Successfully open HID device: '{dev_path}'")
             except Exception as e:
                 self.dev = None
-                print(f"Failed to open HID device: '{dev_path}'")
-                print(e)
+                logger.error(f"Failed to open HID device: '{dev_path}'")
+                logger.exception(e)
 
     def left_click(self):
         if self.dev:
             send_mouse_event(self.dev, 0x1, 0, 0, 0, 0)
             send_mouse_event(self.dev, 0x0, 0, 0, 0, 0)
+        else:
+            logger.warning(f"HID device is not openned")
 
     def right_click(self):
         if self.dev:
             send_mouse_event(self.dev, 0x1, 0, 0, 0, 0)
             send_mouse_event(self.dev, 0x2, 0, 0, 0, 0)
+        else:
+            logger.warning(f"HID device is not openned")
 
     def move_relative(self, x, y):
         """
@@ -44,11 +53,14 @@ class Mouse:
             RelativeMoveRangeError(f"Value of x: {y} out of range (-127 - 127)")
         if self.dev:
             send_mouse_event(self.dev, 0x0, x, y, 0, 0)
+        else:
+            logger.warning(f"HID device is not openned")
 
     def _clean_resources(self):
         if Mouse.HID_DEV:
             Mouse.HID_DEV.close()
             self.dev = None
+            logger.debug(f"Closed HID device: '{self.dev_path}'")
 
     def __enter__(self):
         return self
