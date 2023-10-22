@@ -59,24 +59,24 @@ class ProcessWithResult(multiprocessing.Process):
         return self.parent_conn.recv() if self.parent_conn.poll() else None
 
 
-def _write_to_hid_interface_immediately(hid_dev, buffer):
+def _write_to_hid_interface_immediately(hid_path, buffer):
     try:
+        with open(hid_path, 'ab+') as hid_dev:
             hid_dev.seek(0, 0)
             hid_dev.flush()
             hid_dev.write(bytearray(buffer))
-            
     except BlockingIOError:
         logger.error(
-            f'Failed to write to HID interface: {hid_dev}. Is USB cable connected and Gadget module installed? check https://git.io/J1T7Q'
+            f"Failed to write to HID interface: {hid_dev}. Is USB cable connected ?"
         )
 
 
 def write_to_hid_interface(hid_dev, buffer):
     # Avoid an unnecessary string formatting call in a write that requires low
     # latency.
-    
-    
-    
+
+
+
     if logger.getEffectiveLevel() == logging.DEBUG:
         logger.debug('writing to HID interface %s: %s', hid_dev,
                      ' '.join(['0x%02x' % x for x in buffer]))

@@ -16,23 +16,8 @@ logger = logging.getLogger(__name__)
 
 
 class Keyboard:
-    HID_DEV=None
-
     def __init__(self, dev_path='/dev/hidg0') -> None:
-        self.dev_path = dev_path
-
-        if Keyboard.HID_DEV:
-            self.dev = Keyboard.HID_DEV
-        else:
-            try:
-                Keyboard.HID_DEV=open(dev_path, 'ab+')
-                self.dev = Keyboard.HID_DEV
-                logger.debug(f"Successfully open HID device: '{dev_path}'")
-            except Exception as e:
-                self.dev = None
-                logger.error(f"Failed to open HID device: '{dev_path}'")
-                logger.exception(e)
-
+        self._dev_path = dev_path
         self.set_layout()
 
     def list_layout(self):
@@ -63,9 +48,8 @@ class Keyboard:
             else:
                 mods = reduce(operator.and_, mods, 0)
 
-            if self.dev:
-                send_keystroke(self.dev, mods, keys[0])
-                sleep(delay)
+            send_keystroke(self._dev_path, mods, keys[0])
+            sleep(delay)
 
     def press(self, mods: List[int], key_code: int = 0, release=True):
         if len(mods) == 1:
@@ -73,29 +57,8 @@ class Keyboard:
         else:
             mods = reduce(operator.and_, mods, 0)
 
-        if self.dev:
-            send_keystroke(self.dev, mods, key_code, release=release)
+        send_keystroke(self._dev_path, mods, key_code, release=release)
 
     def release(self):
-        if self.dev:
-            release_keys(self.dev)
-
-    def _clean_resources(self):
-        if Keyboard.HID_DEV:
-            Keyboard.HID_DEV.close()
-            self.dev = None
-            logger.debug(f"Closed HID device: '{self.dev_path}'")
-
-    def __enter__(self):
-        return self
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        self._clean_resources()
-
-    def __del__(self):
-        self._clean_resources()
-
-    def close(self):
-        self._clean_resources()
-
+        release_keys(self._dev_path)
 
